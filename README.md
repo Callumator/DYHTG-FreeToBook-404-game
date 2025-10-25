@@ -1,5 +1,3 @@
-<!--
-```
 <custom-element-demo>
   <template>
     <script src="./main.js"></script>
@@ -17,8 +15,6 @@
     <free-to-book></free-to-book>>
   </template>
 </custom-element-demo>
-```
--->
 
 run
 
