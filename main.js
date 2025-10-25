@@ -1501,7 +1501,7 @@ class FreeToBook extends HTMLElement {
       </div>
 
       <div id=${IDS.CONTAINER} class='container'>
-        <img src='/assets/map.png' id=${IDS.CONTAINER} class='map'>
+        <img src='assets/map.png' id=${IDS.CONTAINER} class='map'>
       </div>
 
       <p id=${IDS.SUBTEXT} class='subtext'></p>
