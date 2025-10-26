@@ -22,7 +22,7 @@ Bonus points!
 - Themed around the travel industry
 - Using freetobook's colour scheme
 
-## Our Solution
+## Our Solution
 
 Geoguesser meets Claw Machine? It's a simple one control game where the user will guess where a given Country is on the provided map, it'll give a distance from the pin and an associated score.
 
