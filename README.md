@@ -24,6 +24,6 @@ Bonus points!
 
 ## Our Solution
 
-Geoguesser meets Claw Machine? It's a simple one control game where the user will guess where a given Country is on the provided map, it'll give a distance from the pin and an associated score.
+Geoguesser meets Claw Machine? It's a simple one button game where the user will guess where a given Country is on the provided map, it'll give a distance from the pin and an associated score.
 
 It's a custom web component, coded in pure JS to ensure it's lightweight and doesn't have any bloat, this also means you can use it in whatever web framework you want.
