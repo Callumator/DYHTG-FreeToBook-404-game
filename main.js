@@ -1436,13 +1436,11 @@ class FreeToBook extends HTMLElement {
           setTimeout(() => {this.#scoredisplay.classList.remove("confetti")}, 2000);
 
           this.#scoredisplay.innerText = `HIGH SCORE: ${this.#highscore}`;
-          this.#subtext.innerText = `
-            YOU WERE ${distance}km AWAY
+          this.#subtext.innerText = `YOU WERE ${distance}km AWAY
             NEW HIGH SCORE! YOU EARNED ${score} POINTS! PRESS SPACE TO RESTART
           `;
         } else {
-          this.#subtext.innerText = `
-            YOU WERE ${distance}km AWAY
+          this.#subtext.innerText = `YOU WERE ${distance}km AWAY
             YOU EARNED ${score} POINTS! PRESS SPACE TO RESTART
           `;
         }
@@ -1501,6 +1499,8 @@ class FreeToBook extends HTMLElement {
           align-items: center;
           text-align: center;
           padding-top: 20px;
+          line-height: 1.5em;
+          min-height: 4.5em;
         }
 
         .top-container {
