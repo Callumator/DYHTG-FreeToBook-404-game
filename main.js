@@ -1,8 +1,4 @@
-/**
- * Big countries array, used to find the longitude and latitude,
- * fetched from https://github.com/eesur/country-codes-lat-long/blob/master/country-codes-lat-long-alpha3.json,
- * fixed Taiwan though.
-  */
+/** List of countries used to fetch coordinates and names, keep in mind these may not be 100% accurate. */
 const COUNTRIES = [
   {
     'country': 'Albania',
@@ -855,11 +851,6 @@ const COUNTRIES = [
     'longitude': -76
   },
   {
-    'country': 'Philippines',
-    'latitude': 13,
-    'longitude': 122
-  },
-  {
     'country': 'Pitcairn',
     'latitude': -24.7,
     'longitude': -127.4
@@ -1130,11 +1121,6 @@ const COUNTRIES = [
     'longitude': 167
   },
   {
-    'country': 'Venezuela',
-    'latitude': 8,
-    'longitude': -66
-  },
-  {
     'country': 'Vietnam',
     'latitude': 16,
     'longitude': 106
@@ -1221,16 +1207,19 @@ const TICK_RATE = 10;
 const PLANE_SPEED = 0.004;
 
 /** For some reason the coords are off, move to the left this % */
-const X_ADJUSTMENT = 0.10;
+const X_ADJUSTMENT = 0.05;
 
 /** For some reason the coords are off, move up this % */
-const Y_ADJUSTMENT = 0.10;
+const Y_ADJUSTMENT = 0.05;
 
 /** Rate to which shit scores do shitter and good scores do better */
 const EXPONENTIAL_FACTOR = 4;
 
 /** Maximum score cap for the game */
 const SCORE_CAP = 5000;
+
+/** The circumference of the Earth from north to south pole in miles, can be used alongside our map to figure out the scale. */
+const MERIDIONAL_CIRCUMFERENCE = 40_008;
 
 /** Key for the `high_score` local storage */
 const LOCAL_STORAGE_KEY = 'free-to-book-high-score';
@@ -1249,25 +1238,28 @@ class FreeToBook extends HTMLElement {
   /** Reference to the tick method */
   #ticker;
 
+  /** Current country */
+  #country;
+
+  /** Stored highscore */
+  #highscore;
+
+  /** Element to show text above the map */
+  #toptext;
+
+  /** Element to show text below the map */
+  #subtext;
+
   /** Element for the body of the component */
   #body;
 
-  /** Instance for the plane */
+  /** Element for the plane */
   #plane;
 
   /** Instance for the pin */
   #pin;
 
-  /** Text to show above the map */
-  #toptext;
-
-  /** Text to show below the map */
-  #subtext;
-
-  #country;
-
-  #highscore;
-
+  /** Element to show the current high score */
   #scoredisplay;
 
   /** Flag to stop the game from ticking */
@@ -1307,6 +1299,8 @@ class FreeToBook extends HTMLElement {
 
         const currentPos = parseInt(this.#plane.style.left);
         const nextStep = this.#body.offsetWidth * PLANE_SPEED;
+
+        // if we've applied the flip then we know we are going right
         const direction = this.#plane.style.transform.indexOf('scaleX') != -1 ? 'left' : 'right';
 
         if (direction === 'right') {
@@ -1324,7 +1318,7 @@ class FreeToBook extends HTMLElement {
           break;
         }
 
-        this.#plane.style.left = `${currentPos - nextStep}px`;
+        this.#plane.style.left = `${(currentPos - nextStep)}px`;
         break;
       }
 
@@ -1377,19 +1371,19 @@ class FreeToBook extends HTMLElement {
           this.#pin = undefined;
         }
 
-        this.#subtext.innerText = 'Press Space to Start!';
-        this.#toptext.innerText = 'Fly me to...';
+        this.#subtext.innerText = 'PRESS SPACE TO START';
+        this.#toptext.innerText = 'FLY ME TO...';
 
         break;
       }
 
       case GAME_STATES.X_AXIS: {
-        this.#subtext.innerText = 'Select X axis';
+        this.#subtext.innerText = 'PRESS SPACE TO SELECT';
 
         const index = Math.floor(Math.random() * COUNTRIES.length);
         this.#country = COUNTRIES[index];
 
-        this.#toptext.innerText = `Fly me to ${this.#country.country}!`;
+        this.#toptext.innerText = `FLY ME TO ${this.#country.country.toUpperCase()}!`;
 
         this.#plane = document.createElement('img');
         this.#plane.id = IDS.PLANE;
@@ -1403,13 +1397,14 @@ class FreeToBook extends HTMLElement {
 
       case GAME_STATES.Y_AXIS: {
         this.#plane.style.transform = `${this.#plane.style.transform} rotate(90deg)`;
-        this.#subtext.innerText = 'Select Y axis';
+        this.#subtext.innerText = 'PRESS SPACE TO SELECT';
         break;
       }
 
       case GAME_STATES.POST_GUESS: {
-        const planeRelativeX = parseInt(this.#plane.style.left) / this.#body.offsetWidth;
-        const planeRelativeY = parseInt(this.#plane.style.top) / this.#body.offsetHeight;
+        const direction = this.#plane.style.transform.indexOf('rotate(180deg)') != -1 ? 'down' : 'up';
+
+        this.#plane.style.transform = direction === 'down' ? `${this.#plane.style.transform} rotate(90deg)` : `${this.#plane.style.transform} rotate(-90deg)`;
 
         const pinRelativeX = ((this.#country.longitude + MAX_COORS.LONGITUDE) / (2 * MAX_COORS.LONGITUDE)) - X_ADJUSTMENT;
         const pinRelativeY = 1 - ((this.#country.latitude + MAX_COORS.LATITUDE) / (2 * MAX_COORS.LATITUDE)) - Y_ADJUSTMENT;
@@ -1417,22 +1412,39 @@ class FreeToBook extends HTMLElement {
         this.#pin = document.createElement('img');
         this.#pin.src = '/assets/pin.png';
         this.#pin.classList.add('pin');
-        this.#pin.style.left = `${(this.#body.offsetWidth * pinRelativeX) + this.#pin.offsetWidth}px`;
-        this.#pin.style.top = `${(this.#body.offsetHeight * pinRelativeY) - this.#pin.offsetHeight / 2}px`;
+        this.#pin.style.left = `${(this.#body.offsetWidth * pinRelativeX) + (this.#pin.offsetWidth / 2)}px`;
+        this.#pin.style.top = `${(this.#body.offsetHeight * pinRelativeY)}px`;
+
+        const planeRelativeX = parseInt(this.#plane.style.left) / this.#body.offsetWidth;
+        const planeRelativeY = parseInt(this.#plane.style.top) / this.#body.offsetHeight;
 
         // Using pythagoras to find the difference between two points
         const diffRelativeX = (planeRelativeX - pinRelativeX) ** 2;
         const diffRelativeY = (planeRelativeY - pinRelativeY) ** 2;
-        const score = Math.round(((1 - Math.sqrt(diffRelativeY + diffRelativeX)) ** EXPONENTIAL_FACTOR) * SCORE_CAP, 0);
+        const diffRelative = Math.sqrt(diffRelativeY + diffRelativeX);
+
+        const inverseDiff = 1 - diffRelative;
+        const score = Math.round((inverseDiff ** EXPONENTIAL_FACTOR) * SCORE_CAP, 0);
+
+        const distance = Math.round(diffRelative * (MERIDIONAL_CIRCUMFERENCE / 2));
 
         if (score > this.#highscore) {
           this.#highscore = score;
           localStorage.setItem(LOCAL_STORAGE_KEY, score);
 
-          this.#scoredisplay.innerText = `High Score: ${this.#highscore}`;
-          this.#subtext.innerText = `New High Score! You earned ${score} points!`;
+          this.#scoredisplay.classList.add("confetti");
+          setTimeout(() => {this.#scoredisplay.classList.remove("confetti")}, 2000);
+
+          this.#scoredisplay.innerText = `HIGH SCORE: ${this.#highscore}`;
+          this.#subtext.innerText = `
+            YOU WERE ${distance}km AWAY
+            NEW HIGH SCORE! YOU EARNED ${score} POINTS! PRESS SPACE TO RESTART
+          `;
         } else {
-          this.#subtext.innerText = `You earned ${score} points!`;
+          this.#subtext.innerText = `
+            YOU WERE ${distance}km AWAY
+            YOU EARNED ${score} POINTS! PRESS SPACE TO RESTART
+          `;
         }
 
         this.#body.appendChild(this.#pin);
@@ -1455,6 +1467,9 @@ class FreeToBook extends HTMLElement {
     shadowRoot.innerHTML = `
       <style>
         :host {
+          font-family: "Press Start 2P", system-ui;
+          font-weight: 500;
+          font-size: 0.65rem;
           background: grey;
           position: relative;
         }
@@ -1467,6 +1482,7 @@ class FreeToBook extends HTMLElement {
           width: 10%;
           position: absolute;
           left: 0;
+          transition: transform 250ms ease-in-out;
         }
 
         .pin {
@@ -1477,12 +1493,14 @@ class FreeToBook extends HTMLElement {
         .toptext {
           align-items: center;
           text-align: center;
+          padding-bottom: 20px;
         }
 
         .subtext {
+          position: relative;
           align-items: center;
           text-align: center;
-          padding: 20px;
+          padding-top: 20px;
         }
 
         .top-container {
@@ -1493,6 +1511,56 @@ class FreeToBook extends HTMLElement {
         .container {
           position: relative;
         }
+
+        .confetti {
+          --animation_speed: 40s;
+          --paper_color1: #a4d6f3;
+          --paper_color2: #ff0000;
+          --paper_color3: #d700ff;
+          --paper_color4: #0000ff;
+          --paper_color5: #ffb000;
+          --paper_color6: #ff00e0;
+        }
+
+        .confetti::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          right: 0;
+          margin-inline: auto;
+          width: 100px;
+          height: 150px;
+          z-index: 1;
+          background-repeat: no-repeat;
+          display: block;
+          animation: confetti ease-out 2s forwards;
+          background-image:linear-gradient(var(--paper_color1) 50%, transparent 20%),
+          linear-gradient(var(--paper_color2) 50%, transparent 20%),
+          linear-gradient(var(--paper_color3) 25%, transparent 20%),
+          linear-gradient(var(--paper_color4) 40%, transparent 20%),
+          linear-gradient(var(--paper_color5) 70%, transparent 20%),
+          linear-gradient(var(--paper_color6) 60%, transparent 20%),
+          linear-gradient(var(--paper_color1) 40%, transparent 20%),
+          linear-gradient(var(--paper_color2) 50%, transparent 20%),
+          linear-gradient(var(--paper_color3) 15%, transparent 20%),
+          linear-gradient(var(--paper_color4) 40%, transparent 20%),
+          linear-gradient(var(--paper_color5) 70%, transparent 20%),
+          linear-gradient(var(--paper_color6) 60%, transparent 20%),
+          linear-gradient(var(--paper_color1) 45%, transparent 20%),
+          linear-gradient(var(--paper_color2) 75%, transparent 20%),
+          linear-gradient(var(--paper_color3) 55%, transparent 20%);
+          background-size: 8px 8px, 5px 7px, 5px 6px, 7px 8px, 8px 6px, 8px 8px, 5px 9px,7px 6px, 8px 8px, 5px 7px, 5px 9px, 6px 9px, 4px 6px, 5px 7px,8px 5px;
+        }
+
+        @keyframes confetti {
+          0% {background-position: 10% -10%, 18% 10%, 25% -10%, 34% -10%, 40% -10%, 47% -10%, 53% 0%,60% 20%, 67% 0%, 73% 0%, 79% 0%, 85% 0%, 92% 10%, 92% 10%, 99% 0%;}
+          50% {background-position: 0% 80%, 8% 80%, 16% 60%, 32% 100%, 40% 70%, 48% 60%, 54% 0%,62% 80%, 70% 80%, 78% 60%, 84% 100%, 90% 70%, 95% 60%, 100% 80%, 88% 80%;}
+          100% {
+            background-position: 0% 90%, 10% 90%, 18% 70%, 25% 110%, 37% 80%, 45% 70%, 57% 10%,63% 90%, 72% 90%, 80% 70%, 88% 110%, 92% 80%, 96% 70%, 100% 90%,84% 90%;
+            background-size: 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%,0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%;
+          }
+        }
+
       </style>
 
       <div class='top-container'>
@@ -1513,11 +1581,11 @@ class FreeToBook extends HTMLElement {
     this.#scoredisplay = shadowRoot.getElementById(IDS.HIGHSCORE);
 
     if (this.#highscore) {
-      this.#scoredisplay.innerText = `High Score: ${this.#highscore}`;
+      this.#scoredisplay.innerText = `HIGH SCORE: ${this.#highscore}`;
     }
 
-    this.#toptext.innerText = 'Fly me to...';
-    this.#subtext.innerText = 'Press Space to Start!';
+    this.#toptext.innerText = 'FlY ME TO...';
+    this.#subtext.innerText = 'PRESS SPACE TO START!';
   }
 }
 
