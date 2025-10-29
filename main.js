@@ -1470,6 +1470,7 @@ class FreeToBook extends HTMLElement {
           font-size: 0.65rem;
           background: grey;
           position: relative;
+          overflow:auto
         }
 
         .map {
@@ -1510,6 +1511,7 @@ class FreeToBook extends HTMLElement {
 
         .container {
           position: relative;
+          overflow:auto
         }
 
         .confetti {
