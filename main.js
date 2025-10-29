@@ -1387,7 +1387,7 @@ class FreeToBook extends HTMLElement {
 
         this.#plane = document.createElement('img');
         this.#plane.id = IDS.PLANE;
-        this.#plane.src = '/assets/plane.png';
+        this.#plane.src = './assets/plane.png';
         this.#plane.classList.add('plane');
 
         this.#body.appendChild(this.#plane);
@@ -1410,7 +1410,7 @@ class FreeToBook extends HTMLElement {
         const pinRelativeY = 1 - ((this.#country.latitude + MAX_COORS.LATITUDE) / (2 * MAX_COORS.LATITUDE)) - Y_ADJUSTMENT;
 
         this.#pin = document.createElement('img');
-        this.#pin.src = '/assets/pin.png';
+        this.#pin.src = './assets/pin.png';
         this.#pin.classList.add('pin');
         this.#pin.style.left = `${(this.#body.offsetWidth * pinRelativeX) + (this.#pin.offsetWidth / 2)}px`;
         this.#pin.style.top = `${(this.#body.offsetHeight * pinRelativeY)}px`;
@@ -1569,7 +1569,7 @@ class FreeToBook extends HTMLElement {
       </div>
 
       <div id=${IDS.CONTAINER} class='container'>
-        <img src='/assets/map.png' id=${IDS.CONTAINER} class='map'>
+        <img src='./assets/map.png' id=${IDS.CONTAINER} class='map'>
       </div>
 
       <p id=${IDS.SUBTEXT} class='subtext'></p>
