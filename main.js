@@ -1212,7 +1212,7 @@ const X_ADJUSTMENT = 0.05;
 /** For some reason the coords are off, move up this % */
 const Y_ADJUSTMENT = 0.05;
 
-/** Rate to which shit scores do shitter and good scores do better */
+/** Rate to which scores do worse and good scores do better */
 const EXPONENTIAL_FACTOR = 4;
 
 /** Maximum score cap for the game */
