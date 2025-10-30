@@ -1471,7 +1471,6 @@ class FreeToBook extends HTMLElement {
           background: grey;
           position: relative;
           max-height: 100vh;
-          overflow-y: auto;
         }
 
         .map {
@@ -1512,7 +1511,6 @@ class FreeToBook extends HTMLElement {
 
         .container {
           position: relative;
-          overflow-y: auto;
         }
 
         .confetti {
